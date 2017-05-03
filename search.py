@@ -1,5 +1,6 @@
-import requests
+from requests import get
 from bs4 import BeautifulSoup
+from collections import OrderedDict as OD
 
 # Reduce clutter
 import warnings
@@ -9,7 +10,7 @@ BASE_URL = "http://www.broadcastify.com/listen/"
 
 
 def cook_soup(path):
-    return BeautifulSoup(requests.get(BASE_URL+path).text)
+    return BeautifulSoup(get(BASE_URL+path).text)
 
 
 def get_ids(path, name, skip=False):
@@ -18,9 +19,9 @@ def get_ids(path, name, skip=False):
     select = soup.find("select", {"name": name})
     if not select:
         raise Exception("Can't find box for {}".format(name))
-    ids = {}
-    for i in select.children:
-        ids[i.text] = i["value"][4 if skip else 0:]
+    ids = OD()
+    for i in select.find_all("option"):
+        ids[i.text] = i["value"][5 if skip else 0:]
     return ids
 
 
@@ -33,15 +34,17 @@ def get_feeds(path):
         return []
     for row in rows:
         cells = row.find_all("td")
+        if not cells:
+            continue
         desc = cells[1].find("span", "rrfont")
-        feed = {
-            "name": cells[1].find("a").text,
-            "desc": desc.text.strip() if desc else None,
-            "id": cells[1].find("a")["href"][13:],
-            "genre": cells[2].text.strip(),
-            "listeners": int(cells[3].text),
-            "status": cells[-1].text
-        }
+        feed = OD([
+            ("name", cells[1].find("a").text),
+            ("desc", desc.text.strip() if desc else None),
+            ("id", cells[1].find("a")["href"][13:]),
+            ("genre", cells[2].text.strip()),
+            ("listeners", int(cells[3].text)),
+            ("status", cells[-1].text)
+        ])
         feeds.append(feed)
     return feeds
 
@@ -49,3 +52,9 @@ def get_feeds(path):
 def get_stream_url(id):
     audio = cook_soup("feed/{}/web".format(id)).find("audio")
     return audio["src"] if audio else None
+
+
+def get_ctid_from_zip(zip):
+    return get(BASE_URL, allow_redirects=False,
+               params={"action": "searchZip",
+                       "zip": zip}).headers["location"].split("/")[-1]
