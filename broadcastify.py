@@ -1,18 +1,18 @@
 import argparse
-parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser = argparse.ArgumentParser()
 
 parser.add_argument("-s", "--scope", help="Specifies the scope for -l",
                     choices=["us", "state", "county", "metro"],
-                    default="us", nargs="?", metavar="S")
+                    metavar="S")
 
 parser.add_argument("id", type=int, help="Specifies stid, cid, mid or feed id",
                     default=0, nargs="?")
 
 actions = parser.add_argument_group(title="actions")
 actions.add_argument("-l", "--list", metavar="T",
-                    help="Lists type T within scope",
-                    choices=["states", "counties", "metros", "feeds"],
-                    action="append", dest="actions")
+                     help="Lists type T within scope (default: states)",
+                     choices=["states", "counties", "metros", "feeds"],
+                     action="append", dest="actions")
 actions.add_argument("-p", "--play", const="play",
                      help="Plays feed", action="append_const", dest="actions")
 
@@ -24,6 +24,6 @@ elif len(args.actions) > 1:
 action = args.actions[0]
 
 if action == "play":
-    raise NotImplementedError
+    raise NotImplementedError("Player not written!")
 else:
-    raise NotImplementedError
+    raise NotImplementedError("Lister not written!")
